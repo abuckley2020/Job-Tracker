@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Prospect } from "@shared/schema";
-import { STATUSES } from "@shared/schema";
+import { STATUSES, INTEREST_LEVELS } from "@shared/schema";
 import { ProspectCard } from "@/components/prospect-card";
 import { AddProspectForm } from "@/components/add-prospect-form";
 import { Briefcase, Plus } from "lucide-react";
@@ -15,6 +15,17 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+
+type InterestFilter = "All" | (typeof INTEREST_LEVELS)[number];
+
+const interestFilterOptions: InterestFilter[] = ["All", ...INTEREST_LEVELS];
+
+const interestBadgeColors: Record<string, string> = {
+  All: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+  High: "bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400",
+  Medium: "bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400",
+  Low: "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300",
+};
 
 const columnColors: Record<string, string> = {
   Bookmarked: "bg-blue-500",
@@ -75,14 +86,19 @@ function KanbanColumn({
 
 export default function Home() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [interestFilter, setInterestFilter] = useState<InterestFilter>("All");
 
   const { data: prospects, isLoading } = useQuery<Prospect[]>({
     queryKey: ["/api/prospects"],
   });
 
+  const filteredProspects = (prospects ?? []).filter(
+    (p) => interestFilter === "All" || p.interestLevel === interestFilter,
+  );
+
   const groupedByStatus = STATUSES.reduce(
     (acc, status) => {
-      acc[status] = (prospects ?? []).filter((p) => p.status === status);
+      acc[status] = filteredProspects.filter((p) => p.status === status);
       return acc;
     },
     {} as Record<string, Prospect[]>,
@@ -108,20 +124,38 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" data-testid="button-add-prospect">
-                  <Plus className="w-4 h-4 mr-1.5" />
-                  Add Prospect
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>Add New Prospect</DialogTitle>
-                </DialogHeader>
-                <AddProspectForm onSuccess={() => setDialogOpen(false)} />
-              </DialogContent>
-            </Dialog>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5" data-testid="interest-filter">
+                {interestFilterOptions.map((level) => (
+                  <button
+                    key={level}
+                    onClick={() => setInterestFilter(level)}
+                    data-testid={`filter-${level.toLowerCase()}`}
+                    className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors cursor-pointer border ${
+                      interestFilter === level
+                        ? `${interestBadgeColors[level]} border-transparent ring-2 ring-offset-1 ring-primary/30`
+                        : `${interestBadgeColors[level]} border-transparent opacity-60`
+                    }`}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" data-testid="button-add-prospect">
+                    <Plus className="w-4 h-4 mr-1.5" />
+                    Add Prospect
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Add New Prospect</DialogTitle>
+                  </DialogHeader>
+                  <AddProspectForm onSuccess={() => setDialogOpen(false)} />
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </div>
       </header>
