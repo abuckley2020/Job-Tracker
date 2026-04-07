@@ -20,11 +20,23 @@ type InterestFilter = "All" | (typeof INTEREST_LEVELS)[number];
 
 const interestFilterOptions: InterestFilter[] = ["All", ...INTEREST_LEVELS];
 
-const interestBadgeColors: Record<string, string> = {
-  All: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-  High: "bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400",
-  Medium: "bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400",
-  Low: "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300",
+const interestFilterColors: Record<string, { active: string; inactive: string }> = {
+  All: {
+    active: "bg-primary text-primary-foreground",
+    inactive: "text-muted-foreground hover:text-foreground",
+  },
+  High: {
+    active: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400",
+    inactive: "text-muted-foreground hover:text-emerald-700 dark:hover:text-emerald-400",
+  },
+  Medium: {
+    active: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400",
+    inactive: "text-muted-foreground hover:text-amber-700 dark:hover:text-amber-400",
+  },
+  Low: {
+    active: "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300",
+    inactive: "text-muted-foreground hover:text-slate-600 dark:hover:text-slate-400",
+  },
 };
 
 const columnColors: Record<string, string> = {
@@ -46,35 +58,69 @@ function KanbanColumn({
   prospects: Prospect[];
   isLoading: boolean;
 }) {
+  const [interestFilter, setInterestFilter] = useState<InterestFilter>("All");
+  const slug = status.replace(/\s+/g, "-").toLowerCase();
+
+  const visibleProspects =
+    interestFilter === "All"
+      ? prospects
+      : prospects.filter((p) => p.interestLevel === interestFilter);
+
   return (
     <div
       className="flex flex-col min-w-[260px] max-w-[320px] w-full bg-muted/40 rounded-md"
-      data-testid={`column-${status.replace(/\s+/g, "-").toLowerCase()}`}
+      data-testid={`column-${slug}`}
     >
       <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border/50">
-        <div className={`w-2 h-2 rounded-full ${columnColors[status] || "bg-gray-400"}`} />
+        <div className={`w-2 h-2 rounded-full shrink-0 ${columnColors[status] || "bg-gray-400"}`} />
         <h3 className="text-sm font-semibold truncate">{status}</h3>
         <Badge
           variant="secondary"
           className="ml-auto text-[10px] px-1.5 py-0 h-5 min-w-[20px] flex items-center justify-center no-default-active-elevate"
-          data-testid={`badge-count-${status.replace(/\s+/g, "-").toLowerCase()}`}
+          data-testid={`badge-count-${slug}`}
         >
-          {prospects.length}
+          {visibleProspects.length}
         </Badge>
       </div>
-      <div className="flex-1 overflow-y-auto px-2 py-2">
+
+      <div
+        className="flex items-center gap-0.5 px-2 pt-2 pb-1"
+        data-testid={`interest-filter-${slug}`}
+      >
+        {interestFilterOptions.map((level) => {
+          const colors = interestFilterColors[level];
+          const isActive = interestFilter === level;
+          return (
+            <button
+              key={level}
+              onClick={() => setInterestFilter(level)}
+              data-testid={`filter-${slug}-${level.toLowerCase()}`}
+              className={`text-[10px] px-2 py-0.5 rounded font-medium transition-colors cursor-pointer ${
+                isActive ? colors.active : colors.inactive
+              }`}
+            >
+              {level}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-2 py-1.5">
         <div className="space-y-2">
           {isLoading ? (
             <>
               <Skeleton className="h-28 rounded-md" />
               <Skeleton className="h-20 rounded-md" />
             </>
-          ) : prospects.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center" data-testid={`empty-${status.replace(/\s+/g, "-").toLowerCase()}`}>
+          ) : visibleProspects.length === 0 ? (
+            <div
+              className="flex flex-col items-center justify-center py-8 text-center"
+              data-testid={`empty-${slug}`}
+            >
               <p className="text-xs text-muted-foreground">No prospects</p>
             </div>
           ) : (
-            prospects.map((prospect) => (
+            visibleProspects.map((prospect) => (
               <ProspectCard key={prospect.id} prospect={prospect} />
             ))
           )}
@@ -86,19 +132,14 @@ function KanbanColumn({
 
 export default function Home() {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [interestFilter, setInterestFilter] = useState<InterestFilter>("All");
 
   const { data: prospects, isLoading } = useQuery<Prospect[]>({
     queryKey: ["/api/prospects"],
   });
 
-  const filteredProspects = (prospects ?? []).filter(
-    (p) => interestFilter === "All" || p.interestLevel === interestFilter,
-  );
-
   const groupedByStatus = STATUSES.reduce(
     (acc, status) => {
-      acc[status] = filteredProspects.filter((p) => p.status === status);
+      acc[status] = (prospects ?? []).filter((p) => p.status === status);
       return acc;
     },
     {} as Record<string, Prospect[]>,
@@ -124,38 +165,20 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5" data-testid="interest-filter">
-                {interestFilterOptions.map((level) => (
-                  <button
-                    key={level}
-                    onClick={() => setInterestFilter(level)}
-                    data-testid={`filter-${level.toLowerCase()}`}
-                    className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors cursor-pointer border ${
-                      interestFilter === level
-                        ? `${interestBadgeColors[level]} border-transparent ring-2 ring-offset-1 ring-primary/30`
-                        : `${interestBadgeColors[level]} border-transparent opacity-60`
-                    }`}
-                  >
-                    {level}
-                  </button>
-                ))}
-              </div>
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm" data-testid="button-add-prospect">
-                    <Plus className="w-4 h-4 mr-1.5" />
-                    Add Prospect
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-lg">
-                  <DialogHeader>
-                    <DialogTitle>Add New Prospect</DialogTitle>
-                  </DialogHeader>
-                  <AddProspectForm onSuccess={() => setDialogOpen(false)} />
-                </DialogContent>
-              </Dialog>
-            </div>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" data-testid="button-add-prospect">
+                  <Plus className="w-4 h-4 mr-1.5" />
+                  Add Prospect
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Add New Prospect</DialogTitle>
+                </DialogHeader>
+                <AddProspectForm onSuccess={() => setDialogOpen(false)} />
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </header>
