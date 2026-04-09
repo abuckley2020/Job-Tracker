@@ -17,22 +17,31 @@ function InterestIndicator({ level }: { level: string }) {
   switch (level) {
     case "High":
       return (
-        <span className="inline-flex items-center gap-1 text-xs font-medium text-red-500 dark:text-red-400" data-testid="interest-high">
-          <Flame className="w-3 h-3" />
+        <span
+          className="inline-flex items-center gap-1 text-[10px] font-bold bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full"
+          data-testid="interest-high"
+        >
+          <Flame className="w-2.5 h-2.5" />
           High
         </span>
       );
     case "Medium":
       return (
-        <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-500 dark:text-amber-400" data-testid="interest-medium">
-          <ThumbsUp className="w-3 h-3" />
+        <span
+          className="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full"
+          data-testid="interest-medium"
+        >
+          <ThumbsUp className="w-2.5 h-2.5" />
           Medium
         </span>
       );
     case "Low":
       return (
-        <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground" data-testid="interest-low">
-          <Minus className="w-3 h-3" />
+        <span
+          className="inline-flex items-center gap-1 text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full"
+          data-testid="interest-low"
+        >
+          <Minus className="w-2.5 h-2.5" />
           Low
         </span>
       );
@@ -41,9 +50,21 @@ function InterestIndicator({ level }: { level: string }) {
   }
 }
 
+const statusAccentColors: Record<string, string> = {
+  Bookmarked: "border-l-sky-400",
+  Applied: "border-l-violet-400",
+  "Phone Screen": "border-l-fuchsia-400",
+  Interviewing: "border-l-amber-400",
+  Offer: "border-l-emerald-400",
+  Rejected: "border-l-rose-400",
+  Withdrawn: "border-l-slate-400",
+};
+
 export function ProspectCard({ prospect }: { prospect: Prospect }) {
   const { toast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
+
+  const accentColor = statusAccentColors[prospect.status] ?? "border-l-gray-300";
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
@@ -61,16 +82,22 @@ export function ProspectCard({ prospect }: { prospect: Prospect }) {
   return (
     <>
       <div
-        className="group bg-card border border-card-border rounded-md p-3 space-y-2 hover-elevate cursor-pointer transition-all duration-150"
+        className={`group bg-white border border-l-4 ${accentColor} border-slate-200/80 rounded-xl p-3 space-y-2 shadow-sm hover:shadow-md hover-elevate cursor-pointer transition-all duration-150`}
         onClick={() => setEditOpen(true)}
         data-testid={`card-prospect-${prospect.id}`}
       >
         <div className="flex items-start justify-between gap-1">
           <div className="min-w-0 flex-1">
-            <h4 className="font-semibold text-sm leading-tight truncate" data-testid={`text-company-${prospect.id}`}>
+            <h4
+              className="font-bold text-sm leading-tight truncate"
+              data-testid={`text-company-${prospect.id}`}
+            >
               {prospect.companyName}
             </h4>
-            <p className="text-xs text-muted-foreground truncate mt-0.5" data-testid={`text-role-${prospect.id}`}>
+            <p
+              className="text-xs text-muted-foreground truncate mt-0.5"
+              data-testid={`text-role-${prospect.id}`}
+            >
               {prospect.roleTitle}
             </p>
           </div>
@@ -78,19 +105,19 @@ export function ProspectCard({ prospect }: { prospect: Prospect }) {
             <Button
               size="icon"
               variant="ghost"
-              className="h-6 w-6"
+              className="h-6 w-6 hover:bg-violet-50 hover:text-violet-600"
               onClick={(e) => {
                 e.stopPropagation();
                 setEditOpen(true);
               }}
               data-testid={`button-edit-${prospect.id}`}
             >
-              <Pencil className="w-3 h-3 text-muted-foreground" />
+              <Pencil className="w-3 h-3" />
             </Button>
             <Button
               size="icon"
               variant="ghost"
-              className="h-6 w-6"
+              className="h-6 w-6 hover:bg-rose-50 hover:text-rose-500"
               onClick={(e) => {
                 e.stopPropagation();
                 deleteMutation.mutate();
@@ -98,7 +125,7 @@ export function ProspectCard({ prospect }: { prospect: Prospect }) {
               disabled={deleteMutation.isPending}
               data-testid={`button-delete-${prospect.id}`}
             >
-              <Trash2 className="w-3 h-3 text-muted-foreground" />
+              <Trash2 className="w-3 h-3" />
             </Button>
           </div>
         </div>
@@ -107,7 +134,7 @@ export function ProspectCard({ prospect }: { prospect: Prospect }) {
           <InterestIndicator level={prospect.interestLevel} />
           {prospect.salary && (
             <span
-              className="inline-flex items-center text-xs font-medium text-emerald-600 dark:text-emerald-400"
+              className="inline-flex items-center text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full"
               data-testid={`text-salary-${prospect.id}`}
             >
               {prospect.salary}
@@ -120,17 +147,20 @@ export function ProspectCard({ prospect }: { prospect: Prospect }) {
             href={prospect.jobUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+            className="inline-flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 hover:underline font-medium"
             onClick={(e) => e.stopPropagation()}
             data-testid={`link-job-url-${prospect.id}`}
           >
             <ExternalLink className="w-3 h-3" />
-            Posting
+            View Posting
           </a>
         )}
 
         {prospect.notes && (
-          <p className="text-xs text-muted-foreground line-clamp-2" data-testid={`text-notes-${prospect.id}`}>
+          <p
+            className="text-xs text-muted-foreground line-clamp-2 bg-slate-50 rounded-lg px-2 py-1"
+            data-testid={`text-notes-${prospect.id}`}
+          >
             {prospect.notes}
           </p>
         )}
