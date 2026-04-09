@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -25,6 +25,9 @@ export const prospects = pgTable("prospects", {
   interestLevel: text("interest_level").notNull().default("Medium"),
   salary: text("salary"),
   notes: text("notes"),
+  colleaguesRating: integer("colleagues_rating"),
+  workLifeBalanceRating: integer("work_life_balance_rating"),
+  excitementRating: integer("excitement_rating"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -51,6 +54,9 @@ export const insertProspectSchema = createInsertSchema(prospects).omit({
       { message: "Salary must be in the format $XXX,XXX or a range like $XXX,XXX - $XXX,XXX" },
     ),
   notes: z.string().optional().nullable(),
+  colleaguesRating: z.number().int().min(1).max(10).optional().nullable(),
+  workLifeBalanceRating: z.number().int().min(1).max(10).optional().nullable(),
+  excitementRating: z.number().int().min(1).max(10).optional().nullable(),
 });
 
 export type InsertProspect = z.infer<typeof insertProspectSchema>;

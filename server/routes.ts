@@ -62,6 +62,20 @@ export async function registerRoutes(
       updates.interestLevel = level;
     }
 
+    for (const field of ["colleaguesRating", "workLifeBalanceRating", "excitementRating"] as const) {
+      if (body[field] !== undefined) {
+        if (body[field] === null) {
+          updates[field] = null;
+        } else {
+          const r = Number(body[field]);
+          if (!Number.isInteger(r) || r < 1 || r > 10) {
+            return res.status(400).json({ message: `${field} must be an integer between 1 and 10` });
+          }
+          updates[field] = r;
+        }
+      }
+    }
+
     const updated = await storage.updateProspect(id, updates);
     res.json(updated);
   });
