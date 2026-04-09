@@ -16,6 +16,12 @@ export function getNextStatus(currentStatus: string): string {
   return next;
 }
 
+const RATING_FIELDS: { key: string; label: string }[] = [
+  { key: "colleaguesRating", label: "Colleagues rating" },
+  { key: "workLifeBalanceRating", label: "Work/life balance rating" },
+  { key: "excitementRating", label: "Excitement rating" },
+];
+
 export function validateProspect(data: Record<string, unknown>): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
@@ -43,6 +49,16 @@ export function validateProspect(data: Record<string, unknown>): { valid: boolea
     const salary = String(data.salary).trim();
     if (!SALARY_REGEX.test(salary)) {
       errors.push("Salary must be in the format $XXX,XXX or a range like $XXX,XXX - $XXX,XXX");
+    }
+  }
+
+  for (const { key, label } of RATING_FIELDS) {
+    const raw = data[key];
+    if (raw !== undefined && raw !== null) {
+      const asNum = Number(raw);
+      if (!Number.isInteger(asNum) || asNum < 1 || asNum > 10) {
+        errors.push(`${label} must be an integer between 1 and 10`);
+      }
     }
   }
 

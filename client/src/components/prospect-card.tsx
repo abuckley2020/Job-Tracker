@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Prospect } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Trash2, Pencil, Flame, ThumbsUp, Minus } from "lucide-react";
@@ -12,6 +12,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EditProspectForm } from "./edit-prospect-form";
+import { RatingSlider } from "./rating-slider";
+
+type RatingField = "colleaguesRating" | "workLifeBalanceRating" | "excitementRating";
 
 function InterestIndicator({ level }: { level: string }) {
   switch (level) {
@@ -64,6 +67,20 @@ export function ProspectCard({ prospect }: { prospect: Prospect }) {
   const { toast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
 
+  const [ratings, setRatings] = useState<Record<RatingField, number | null>>({
+    colleaguesRating: prospect.colleaguesRating ?? null,
+    workLifeBalanceRating: prospect.workLifeBalanceRating ?? null,
+    excitementRating: prospect.excitementRating ?? null,
+  });
+
+  useEffect(() => {
+    setRatings({
+      colleaguesRating: prospect.colleaguesRating ?? null,
+      workLifeBalanceRating: prospect.workLifeBalanceRating ?? null,
+      excitementRating: prospect.excitementRating ?? null,
+    });
+  }, [prospect.colleaguesRating, prospect.workLifeBalanceRating, prospect.excitementRating]);
+
   const accentColor = statusAccentColors[prospect.status] ?? "border-l-gray-300";
 
   const deleteMutation = useMutation({
@@ -78,6 +95,28 @@ export function ProspectCard({ prospect }: { prospect: Prospect }) {
       toast({ title: "Failed to delete prospect", variant: "destructive" });
     },
   });
+
+  const ratingMutation = useMutation({
+    mutationFn: async (data: Partial<Record<RatingField, number | null>>) => {
+      await apiRequest("PATCH", `/api/prospects/${prospect.id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/prospects"] });
+    },
+    onError: () => {
+      toast({ title: "Failed to save rating", variant: "destructive" });
+      setRatings({
+        colleaguesRating: prospect.colleaguesRating ?? null,
+        workLifeBalanceRating: prospect.workLifeBalanceRating ?? null,
+        excitementRating: prospect.excitementRating ?? null,
+      });
+    },
+  });
+
+  const handleRatingChange = (field: RatingField, value: number | null) => {
+    setRatings((prev) => ({ ...prev, [field]: value }));
+    ratingMutation.mutate({ [field]: value });
+  };
 
   return (
     <>
@@ -164,6 +203,37 @@ export function ProspectCard({ prospect }: { prospect: Prospect }) {
             {prospect.notes}
           </p>
         )}
+
+        <div
+          className="border-t border-slate-100 pt-2 space-y-2"
+          onClick={(e) => e.stopPropagation()}
+          data-testid={`ratings-${prospect.id}`}
+        >
+          <RatingSlider
+            label="Impression of Colleagues"
+            value={ratings.colleaguesRating}
+            onChange={(v) => handleRatingChange("colleaguesRating", v)}
+            disabled={ratingMutation.isPending}
+            testId={`slider-colleagues-${prospect.id}`}
+            compact
+          />
+          <RatingSlider
+            label="Work / Life Balance"
+            value={ratings.workLifeBalanceRating}
+            onChange={(v) => handleRatingChange("workLifeBalanceRating", v)}
+            disabled={ratingMutation.isPending}
+            testId={`slider-worklife-${prospect.id}`}
+            compact
+          />
+          <RatingSlider
+            label="Excitement about the Work"
+            value={ratings.excitementRating}
+            onChange={(v) => handleRatingChange("excitementRating", v)}
+            disabled={ratingMutation.isPending}
+            testId={`slider-excitement-${prospect.id}`}
+            compact
+          />
+        </div>
       </div>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
