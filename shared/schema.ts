@@ -14,6 +14,8 @@ export const STATUSES = [
 
 export const INTEREST_LEVELS = ["High", "Medium", "Low"] as const;
 
+export const SALARY_REGEX = /^\$\d{1,3}(,\d{3})*(\s*-\s*\$\d{1,3}(,\d{3})*)?$/;
+
 export const prospects = pgTable("prospects", {
   id: serial("id").primaryKey(),
   companyName: text("company_name").notNull(),
@@ -21,6 +23,7 @@ export const prospects = pgTable("prospects", {
   jobUrl: text("job_url"),
   status: text("status").notNull().default("Bookmarked"),
   interestLevel: text("interest_level").notNull().default("Medium"),
+  salary: text("salary"),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -34,6 +37,19 @@ export const insertProspectSchema = createInsertSchema(prospects).omit({
   status: z.enum(STATUSES).default("Bookmarked"),
   interestLevel: z.enum(INTEREST_LEVELS).default("Medium"),
   jobUrl: z.string().optional().nullable(),
+  salary: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((v) => {
+      if (!v || v.trim() === "") return null;
+      const t = v.trim();
+      return t.startsWith("$") ? t : `$${t}`;
+    })
+    .refine(
+      (v) => !v || SALARY_REGEX.test(v),
+      { message: "Salary must be in the format $XXX,XXX or a range like $XXX,XXX - $XXX,XXX" },
+    ),
   notes: z.string().optional().nullable(),
 });
 

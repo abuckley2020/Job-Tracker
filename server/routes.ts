@@ -39,6 +39,13 @@ export async function registerRoutes(
     if (body.roleTitle !== undefined) updates.roleTitle = body.roleTitle;
     if (body.jobUrl !== undefined) updates.jobUrl = body.jobUrl;
     if (body.notes !== undefined) updates.notes = body.notes;
+    if (body.salary !== undefined) {
+      const trimmed = typeof body.salary === "string" ? body.salary.trim() : "";
+      if (trimmed !== "" && !/^\$\d{1,3}(,\d{3})*(\s*-\s*\$\d{1,3}(,\d{3})*)?$/.test(trimmed)) {
+        return res.status(400).json({ message: "Salary must be in the format $XXX,XXX or a range like $XXX,XXX - $XXX,XXX" });
+      }
+      updates.salary = trimmed === "" ? null : trimmed;
+    }
 
     if (body.status !== undefined) {
       if (!STATUSES.includes(body.status)) {
