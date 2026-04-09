@@ -116,3 +116,127 @@ describe("salary validation", () => {
     );
   });
 });
+
+describe("rating validation", () => {
+  test("accepts all three ratings omitted (null)", () => {
+    const result = validateProspect({
+      companyName: "Acme",
+      roleTitle: "Engineer",
+      colleaguesRating: null,
+      workLifeBalanceRating: null,
+      excitementRating: null,
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  test("accepts all three ratings omitted (undefined)", () => {
+    const result = validateProspect({
+      companyName: "Acme",
+      roleTitle: "Engineer",
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  test("accepts valid ratings of 1 (minimum)", () => {
+    const result = validateProspect({
+      companyName: "Acme",
+      roleTitle: "Engineer",
+      colleaguesRating: 1,
+      workLifeBalanceRating: 1,
+      excitementRating: 1,
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  test("accepts valid ratings of 10 (maximum)", () => {
+    const result = validateProspect({
+      companyName: "Acme",
+      roleTitle: "Engineer",
+      colleaguesRating: 10,
+      workLifeBalanceRating: 10,
+      excitementRating: 10,
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  test("accepts a mix of rated and unrated fields", () => {
+    const result = validateProspect({
+      companyName: "Acme",
+      roleTitle: "Engineer",
+      colleaguesRating: 7,
+      workLifeBalanceRating: null,
+      excitementRating: 5,
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  test("rejects colleaguesRating of 0 (below minimum)", () => {
+    const result = validateProspect({
+      companyName: "Acme",
+      roleTitle: "Engineer",
+      colleaguesRating: 0,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain("Colleagues rating must be an integer between 1 and 10");
+  });
+
+  test("rejects workLifeBalanceRating of 11 (above maximum)", () => {
+    const result = validateProspect({
+      companyName: "Acme",
+      roleTitle: "Engineer",
+      workLifeBalanceRating: 11,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain("Work/life balance rating must be an integer between 1 and 10");
+  });
+
+  test("rejects excitementRating of -1 (negative)", () => {
+    const result = validateProspect({
+      companyName: "Acme",
+      roleTitle: "Engineer",
+      excitementRating: -1,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain("Excitement rating must be an integer between 1 and 10");
+  });
+
+  test("rejects a non-integer rating (decimal)", () => {
+    const result = validateProspect({
+      companyName: "Acme",
+      roleTitle: "Engineer",
+      colleaguesRating: 5.5,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain("Colleagues rating must be an integer between 1 and 10");
+  });
+
+  test("reports errors for multiple invalid ratings simultaneously", () => {
+    const result = validateProspect({
+      companyName: "Acme",
+      roleTitle: "Engineer",
+      colleaguesRating: 0,
+      workLifeBalanceRating: 11,
+      excitementRating: 5.5,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toHaveLength(3);
+    expect(result.errors).toContain("Colleagues rating must be an integer between 1 and 10");
+    expect(result.errors).toContain("Work/life balance rating must be an integer between 1 and 10");
+    expect(result.errors).toContain("Excitement rating must be an integer between 1 and 10");
+  });
+});

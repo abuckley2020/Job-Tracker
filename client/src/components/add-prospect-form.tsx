@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { RatingSlider } from "./rating-slider";
 
 export function AddProspectForm({ onSuccess }: { onSuccess?: () => void }) {
   const { toast } = useToast();
@@ -38,6 +39,9 @@ export function AddProspectForm({ onSuccess }: { onSuccess?: () => void }) {
       interestLevel: "Medium",
       salary: "",
       notes: "",
+      colleaguesRating: null,
+      workLifeBalanceRating: null,
+      excitementRating: null,
     },
   });
 
@@ -204,6 +208,63 @@ export function AddProspectForm({ onSuccess }: { onSuccess?: () => void }) {
             </FormItem>
           )}
         />
+
+        <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 space-y-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Initial Ratings (optional)
+          </p>
+          <FormField
+            control={form.control}
+            name="colleaguesRating"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <RatingSlider
+                    label="Impression of Colleagues"
+                    value={field.value ?? null}
+                    onChange={field.onChange}
+                    testId="slider-add-colleagues"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="workLifeBalanceRating"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <RatingSlider
+                    label="Work / Life Balance"
+                    value={field.value ?? null}
+                    onChange={field.onChange}
+                    testId="slider-add-worklife"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="excitementRating"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <RatingSlider
+                    label="Excitement about the Work"
+                    value={field.value ?? null}
+                    onChange={field.onChange}
+                    testId="slider-add-excitement"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <Button type="submit" className="w-full" disabled={mutation.isPending} data-testid="button-submit-prospect">
           {mutation.isPending ? (

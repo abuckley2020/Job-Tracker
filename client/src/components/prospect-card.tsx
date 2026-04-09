@@ -12,78 +12,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EditProspectForm } from "./edit-prospect-form";
-
-const SEGMENT_COLORS = [
-  "#f87171",
-  "#fb923c",
-  "#fbbf24",
-  "#facc15",
-  "#d9f99d",
-  "#a3e635",
-  "#4ade80",
-  "#22c55e",
-  "#16a34a",
-  "#15803d",
-];
+import { RatingSlider } from "./rating-slider";
 
 type RatingField = "colleaguesRating" | "workLifeBalanceRating" | "excitementRating";
-
-function RatingSlider({
-  label,
-  value,
-  onChange,
-  disabled,
-  testId,
-}: {
-  label: string;
-  value: number | null;
-  onChange: (v: number | null) => void;
-  disabled?: boolean;
-  testId?: string;
-}) {
-  return (
-    <div
-      className="flex items-center gap-2"
-      onClick={(e) => e.stopPropagation()}
-      data-testid={testId}
-    >
-      <span className="text-[9px] font-semibold text-muted-foreground w-14 shrink-0 leading-tight">
-        {label}
-      </span>
-      <div className="flex gap-[2px]">
-        {SEGMENT_COLORS.map((color, i) => {
-          const segVal = i + 1;
-          const isSelected = value === segVal;
-          const isFilled = value !== null && segVal <= value;
-          return (
-            <button
-              key={segVal}
-              disabled={disabled}
-              onClick={(e) => {
-                e.stopPropagation();
-                onChange(isSelected ? null : segVal);
-              }}
-              className="rounded-[3px] transition-transform duration-75 hover:scale-125 focus:outline-none disabled:cursor-not-allowed"
-              style={{
-                width: 13,
-                height: 20,
-                backgroundColor: color,
-                opacity: isFilled ? 1 : 0.15,
-                boxShadow: isSelected
-                  ? `0 0 0 2px white, 0 0 0 3px ${color}`
-                  : "none",
-              }}
-              title={`${segVal}/10`}
-            />
-          );
-        })}
-      </div>
-      <span className="text-[9px] font-bold text-muted-foreground w-4 text-right tabular-nums">
-        {value !== null ? value : "–"}
-      </span>
-    </div>
-  );
-}
 
 function InterestIndicator({ level }: { level: string }) {
   switch (level) {
@@ -274,30 +205,33 @@ export function ProspectCard({ prospect }: { prospect: Prospect }) {
         )}
 
         <div
-          className="border-t border-slate-100 pt-2 space-y-[5px]"
+          className="border-t border-slate-100 pt-2 space-y-2"
           onClick={(e) => e.stopPropagation()}
           data-testid={`ratings-${prospect.id}`}
         >
           <RatingSlider
-            label="Colleagues"
+            label="Impression of Colleagues"
             value={ratings.colleaguesRating}
             onChange={(v) => handleRatingChange("colleaguesRating", v)}
             disabled={ratingMutation.isPending}
             testId={`slider-colleagues-${prospect.id}`}
+            compact
           />
           <RatingSlider
-            label="Work / Life"
+            label="Work / Life Balance"
             value={ratings.workLifeBalanceRating}
             onChange={(v) => handleRatingChange("workLifeBalanceRating", v)}
             disabled={ratingMutation.isPending}
             testId={`slider-worklife-${prospect.id}`}
+            compact
           />
           <RatingSlider
-            label="Excitement"
+            label="Excitement about the Work"
             value={ratings.excitementRating}
             onChange={(v) => handleRatingChange("excitementRating", v)}
             disabled={ratingMutation.isPending}
             testId={`slider-excitement-${prospect.id}`}
+            compact
           />
         </div>
       </div>
