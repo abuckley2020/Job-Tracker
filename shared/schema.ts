@@ -41,8 +41,13 @@ export const insertProspectSchema = createInsertSchema(prospects).omit({
     .string()
     .optional()
     .nullable()
+    .transform((v) => {
+      if (!v || v.trim() === "") return null;
+      const t = v.trim();
+      return t.startsWith("$") ? t : `$${t}`;
+    })
     .refine(
-      (v) => !v || v.trim() === "" || SALARY_REGEX.test(v.trim()),
+      (v) => !v || SALARY_REGEX.test(v),
       { message: "Salary must be in the format $XXX,XXX or a range like $XXX,XXX - $XXX,XXX" },
     ),
   notes: z.string().optional().nullable(),

@@ -169,12 +169,19 @@ export function EditProspectForm({ prospect, onSuccess }: EditProspectFormProps)
             <FormItem>
               <FormLabel>Salary (optional)</FormLabel>
               <FormControl>
-                <Input
-                  placeholder="e.g. $120,000 or $80,000 - $100,000"
-                  {...field}
-                  value={field.value ?? ""}
-                  data-testid="input-edit-salary"
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none select-none">
+                    $
+                  </span>
+                  <Input
+                    className="pl-6"
+                    placeholder="120,000 or 120,000 - $150,000"
+                    {...field}
+                    value={(field.value ?? "").replace(/^\$/, "")}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    data-testid="input-edit-salary"
+                  />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
